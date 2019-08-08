@@ -13,16 +13,38 @@ export class TileService{
             left: left,
             top: top,
             hasControls: false,
-            hasBorders: false,
-            perPixelTargetFind: true
+          //  hasBorders: false,
+            perPixelTargetFind: true, 
+            hoverCursor: 'pointer', 
+            subTargetCheck: true,
+            //originX: 'center',
+            //originY: 'center',
+           //  padding: 20
         }
         var rectArr = [];
         squareCoords.forEach(element => {
             rectArr.push(this.initializeRect(element[0],element[1], color));
         });
-
+        
         var group = new fabric.Group(rectArr, options);
-        this.addArrows(group);
+        // group.setControlsVisibility({
+        //     tl: false, //top-left
+        //     mt: false, // middle-top
+        //     tr: false, //top-right
+        //     ml: false, //middle-left
+        //     mr: false, //middle-right
+        //     bl: false, // bottom-left
+        //     mb: false, //middle-bottom
+        //     br: false, //bottom-right
+        //     mtr: true
+        // });
+        // group.on({
+        //     'rotated': e => {
+        //         group.straighten();
+        //         group.setCoords();
+        //     }
+        // })
+
         return group;
 
     }
@@ -37,7 +59,8 @@ export class TileService{
             hasBorders: false,
             perPixelTargetFind: true,
             fill: color,
-            stroke: 'black'
+            stroke: 'black', 
+            selectionBackgroundColor: "white", 
           });
     }
 
@@ -50,70 +73,26 @@ export class TileService{
 
     //dir 0 - right, 
     rotate90(obj, dir) {
+        //console.log(obj.left);
+        var objCenter = obj.getCenterPoint();
         if(dir == 0){
-            obj.rotate(90);
+            obj.angle = (obj.angle + 90);
+            if((obj.angle == 360) ) {
+                obj.angle = 0;
+            }
         }
-        else
-            obj.rotate(-90);
+        else{
+            if((obj.angle == 0) ) {
+                obj.angle = 360;
+            }
+
+            obj.angle = (obj.angle - 90);
+        }
+       obj.setPositionByOrigin(objCenter,'center','center');
+       obj.setCoords();
+
+       
+       //console.log(obj.left);
     }
 
-    toggleArrowsVisibility(group, visible: boolean) {
-        console.log(visible);
-        var objs = group.getObjects();
-        objs.forEach((obj) => {
-            if(obj.type == "image")
-            obj.visible = visible;
-        })
-      }
-    
-      arrowsLeftOffset = 10;
-      arrowsTopOffset = 5;
-    
-    private  addArrows(group) {
-    
-        //curved_right_arrow
-        fabric.Image.fromURL("../../assets/img/curved_arrow.png", (img) => {
-            img.scaleToHeight(20);
-            img.scaleToWidth(20);
-            img.top = - group.height/2 - this.arrowsTopOffset;
-            img.left = group.width/2 -  this.arrowsLeftOffset;
-            img.visible = false;
-            group.add(img);
-        });
-    
-        //left_arrow
-        fabric.Image.fromURL("../../assets/img/right_arrow.png", (img) => {
-            img.flipX = true;
-            img.scaleToHeight(20);
-            img.scaleToWidth(20);
-            img.left = group.width/2  - this.arrowsLeftOffset;
-            img.top = group.height/2 - this.arrowsTopOffset;
-            img.visible = false;
-            group.add(img);
-        });
-    
-        //right_arrow
-        fabric.Image.fromURL("../../assets/img/right_arrow.png", (img) => {
-            img.scaleToHeight(20);
-            img.scaleToWidth(20);
-            img.left = - group.width/2 - this.arrowsLeftOffset;
-            img.top = group.height/2 - this.arrowsTopOffset;
-            img.visible = false;
-            group.add(img);
-          });
-    
-        //curved_left_arrow
-        fabric.Image.fromURL("../../assets/img/curved_arrow.png", (img) => {
-            img.scaleToHeight(20);
-            img.scaleToWidth(20);
-            img.flipX = true;
-            img.left = - group.width/2 - this.arrowsLeftOffset;
-            img.top = - group.height/2 - this.arrowsTopOffset;
-            img.visible = false;
-            group.add(img);
-        });
-    
-        
-    console.log(group);
-      }
 }
