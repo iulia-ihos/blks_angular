@@ -23,10 +23,6 @@ export class BoardComponent implements OnInit {
   private redBoundBox;
   private box;
 
-  private right_arrow;
-  private left_arrow;
-  private curved_right_arrow;
-  private curved_left_arrow;
   private tileService: TileService;
 
 
@@ -52,9 +48,9 @@ export class BoardComponent implements OnInit {
 		targetFindTolerance: 2, 
 		renderOnAddRemove: false
 	  });
-  
-    this.canvas.setWidth(this.element.nativeElement.parentElement.clientWidth);
-    this.canvas.setHeight(this.element.nativeElement.parentElement.clientHeight);
+  console.log(this.element.nativeElement);
+	 this.canvas.setWidth(this.element.nativeElement.parentElement.clientWidth);
+     this.canvas.setHeight(this.element.nativeElement.parentElement.clientHeight);
 	
 	var bbPadding = 10;
 
