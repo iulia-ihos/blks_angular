@@ -13,13 +13,10 @@ export class TileService{
             left: left,
             top: top,
             hasControls: false,
-          //  hasBorders: false,
+            hasBorders: false,
             perPixelTargetFind: true, 
             hoverCursor: 'pointer', 
             subTargetCheck: true,
-            //originX: 'center',
-            //originY: 'center',
-           //  padding: 20
         }
         var rectArr = [];
         squareCoords.forEach(element => {
@@ -49,10 +46,10 @@ export class TileService{
 
     }
 
-    private initializeRect(x: number, y: number, color: string): fabric.Rect{
+    private initializeRect(left: number, top: number, color: string): fabric.Rect{
         return new fabric.Rect({
-            left: x*this.squareLength,
-            top: y*this.squareLength,
+            left: left*this.squareLength,
+            top: top*this.squareLength,
             width: this.squareLength,
             height: this.squareLength,
             hasControls: false,

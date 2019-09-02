@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 
 import { AuthService } from '../auth/auth.service';
-import { SignUpInfo } from '../auth/signup-info';
 import { User } from '../model/user';
 import { RolesEnum } from '../model/RolesEnum';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators, ValidatorFn, AbstractControl } from '@angular/forms';
 
 @Component({
   selector: 'app-register',
@@ -29,11 +28,27 @@ export class RegisterComponent implements OnInit {
       'username': new FormControl(this.form.username, [Validators.required,
         Validators.minLength(4)]),
 
+      'email': new FormControl(this.form.email, [Validators.required]),
+
+      'password': new FormControl(this.form.password, [Validators.required,
+        Validators.minLength(8), this.emailValidator(this.emailRegex)])
+
     })
+
    
     this.form.email = "";
     this.form.username = "";
     this.form.password = "";
+  }
+
+  private emailRegex = new RegExp("[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
+
+  //returns null if validator checks
+  emailValidator(email: RegExp): ValidatorFn {
+    return (control: AbstractControl): {[key: string]: any} | null => {
+      const valid = email.test(control.value);
+      return valid ? null: {'email': {value: control.value}};
+    };
   }
 
   onSubmit() {
@@ -58,5 +73,9 @@ export class RegisterComponent implements OnInit {
         this.isSignUpFailed = true;
       }
     );
+  }
+
+  gotToLoginPage() {
+    window.location.assign("login");
   }
 }

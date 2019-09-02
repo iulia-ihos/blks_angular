@@ -1,5 +1,6 @@
 <div *ngIf="isSignedUp; else signupForm">
   Your registration is successful. Please login!
+  <br><button (click) = "goToLoginPage()" class="btn btn-primary mt-5">Login</button>
 </div>
 
 <ng-template #signupForm>
@@ -10,7 +11,7 @@
         <input type="text" class="form-control" name="username" [(ngModel)]="form.username" #username="ngModel" required />
         <div *ngIf="formGroup.submitted && username.invalid">
           <div class = "alert alert-danger" *ngIf="username.errors.required">Username is required</div>
-          <div class ="alert alert-danger" *ngIf="usernamee.errors.minLength">Username must be at least 6 characters long</div>
+          <div class ="alert alert-danger" *ngIf="usernamee.errors.minLength">Username must be at least 4 characters long</div>
         </div>
       </div>
       <div class="form-group">
@@ -27,7 +28,7 @@
           required minlength="6" />
         <div *ngIf="formGroup.submitted && password.invalid">
           <div class ="alert alert-danger" *ngIf="password.errors.required">Password is required</div>
-          <div  class ="alert alert-danger" *ngIf="password.errors.minlength">Password must be at least 6 characters</div>
+          <div  class ="alert alert-danger" *ngIf="password.errors.minlength">Password must be at least 8 characters</div>
         </div>
       </div>
       <div class="form-group">

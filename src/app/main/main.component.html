@@ -1,9 +1,21 @@
 <div class="flex-container" flxLayout = "row" flxLayoutAlign = "center center">
-  <div fxFlex = "10%" class = "sidenav">
-      <a routerLink="login">Login</a>
-      <a routerLink="register">Register</a>
-      <a routerLink="new-game">Start Game</a>
-  </div>
+    <div *ngIf="tokenService.getToken(); else notLoggedIn">
+        <div  class = "sidenav"> 
+            <span><i class="fa fa-user-circle fa-2x" ></i>
+            {{tokenService.getUsername()}}</span>
+            <a (click) = "logOut()">Log Out</a>
+            <a routerLink="new-game">Start Game</a>
+        </div>
+      </div>
+      
+      <ng-template #notLoggedIn>
+          <div  class = "sidenav">
+              <a routerLink="login">Login</a>
+              <a routerLink="register">Register</a>
+              <a routerLink="new-game">Start Game</a>
+          </div>
+      </ng-template>
+  
   <div fxFlexAlign = "center" fxFlex = "100">
     <app-board></app-board>
   </div>

@@ -4,6 +4,9 @@ import { AuthService } from '../auth/auth.service';
 import { TokenStorageService } from '../auth/token-storage.service';
 import { AuthLoginInfo } from '../auth/login-info';
 import { PreviousRouteService } from "../service/previous-route.service";
+import { WebSocketService } from '../websocket/WebSocketService';
+import { UserService } from '../services/user.service';
+
 
 @Component({
   selector: 'app-login',
@@ -20,7 +23,9 @@ export class LoginComponent implements OnInit {
 
   constructor(private authService: AuthService, 
     private tokenStorage: TokenStorageService,
-    private prevRoute: PreviousRouteService) { }
+    private prevRoute: PreviousRouteService, 
+    private webSocket: WebSocketService,
+    private userService: UserService) { }
 
   ngOnInit() {
     if (this.tokenStorage.getToken()) {
@@ -38,15 +43,17 @@ export class LoginComponent implements OnInit {
 
     this.authService.attemptAuth(this.loginInfo).subscribe(
       data => {
-        this.tokenStorage.saveToken(data.accessToken);
-        this.tokenStorage.saveUsername(data.email);
-        console.log(data.email);
+        console.log(data);
+        this.tokenStorage.saveToken(data.token);
+        this.tokenStorage.saveUsername(data.username);
         this.tokenStorage.saveAuthorities(data.authorities);
 
         this.isLoginFailed = false;
         this.isLoggedIn = true;
         this.roles = this.tokenStorage.getAuthorities();
-        window.location.assign(this.prevRoute.getPreviousUrl());  
+       
+       this.webSocket.initializeWebSocketConnection();
+        //window.location.assign("");  
       
       },
       error => {
