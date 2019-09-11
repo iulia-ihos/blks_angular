@@ -8,5 +8,11 @@ export class Game {
 	endTime?: Date;
 	winner?: User;
 	players?: Player[];
-    moves?: Move[];
+	moves?: Move[];
+	status: string
+	
+	constructor(idGame: number, status: string) {
+		this.status = status;
+		this.idGame = idGame;
+	}
 }

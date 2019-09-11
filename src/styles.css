@@ -9,6 +9,22 @@ body, div, html, .mat-card, mat-card-title, mat-card-subtitle, .mat-card-subtitl
   max-width: 45%;
 }
 
+.red{
+  color: red;
+}
+
+.green{
+  color: green;
+}
+
+.blue{
+  color: blue;
+}
+
+.yellow{
+  color: yellow;
+}
+
 /*!
  * Bootstrap v4.3.1 (https://getbootstrap.com/)
  * Copyright 2011-2019 The Bootstrap Authors

@@ -4,8 +4,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { FormsModule }   from '@angular/forms';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-// import { InjectableRxStompConfig, RxStompService, rxStompServiceFactory } from '@stomp/ng2-stompjs';
-// import { RxStompConfig } from './stomp/RxStompConfig';
+import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
+
 
 import { AppComponent } from './app.component';
 import { BoardComponent } from './board/board.component';
@@ -15,6 +15,8 @@ import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { HttpConfigInterceptor } from './auth/auth-interceptor';
 import { MainComponent } from './main/main.component';
+import { GameComponent } from './game/game.component';
+import { LeaderboardComponent } from './leaderboard/leaderboard.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +26,9 @@ import { MainComponent } from './main/main.component';
     CanvasComponent,
     LoginComponent,
     RegisterComponent,
-    MainComponent
+    MainComponent,
+    GameComponent,
+    LeaderboardComponent
   ],
   imports: [
     BrowserModule,
@@ -32,14 +36,12 @@ import { MainComponent } from './main/main.component';
     FlexLayoutModule,
     FormsModule,
     HttpClientModule,
+    NgbModule
    
   ],
 
   providers:[
     { provide: HTTP_INTERCEPTORS, useClass: HttpConfigInterceptor, multi: true },
-    // { provide: InjectableRxStompConfig, useValue: RxStompConfig },
-    // { provide: RxStompService, useFactory: rxStompServiceFactory,
-    //   deps: [InjectableRxStompConfig]}
     ],
   
   bootstrap: [AppComponent]

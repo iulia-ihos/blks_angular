@@ -1,14 +1,30 @@
 import {fabric} from 'fabric';
 import { Injectable } from '@angular/core';
+import { TileSqaures } from '../model/tileSquares';
+import { TileNameEnum } from '../model/TileNameEnum';
+import { Tile } from '../model/tile';
 
+type startPosition = {top: number, left: number};
 @Injectable({
  providedIn: 'root',
 })
-export class TileService{
+export class TileService {
 
     squareLength = 15;
 
-    createTile(color: string, squareCoords, top: number, left: number): fabric.Group {
+    tilePosition: Map<TileNameEnum, startPosition> = new Map<TileNameEnum, startPosition>();
+
+    spacing = 5;
+    
+
+    //tileOrder: TileNameEnum[];
+
+
+
+   
+
+    createTile(color: string, squares: TileSqaures[], top: number, left: number): fabric.Group {
+        
         var options = {
             left: left,
             top: top,
@@ -19,29 +35,11 @@ export class TileService{
             subTargetCheck: true,
         }
         var rectArr = [];
-        squareCoords.forEach(element => {
-            rectArr.push(this.initializeRect(element[0],element[1], color));
+        squares.forEach(element => {
+            rectArr.push(this.initializeRect(element.square.left,element.square.top, color));
         });
         
         var group = new fabric.Group(rectArr, options);
-        // group.setControlsVisibility({
-        //     tl: false, //top-left
-        //     mt: false, // middle-top
-        //     tr: false, //top-right
-        //     ml: false, //middle-left
-        //     mr: false, //middle-right
-        //     bl: false, // bottom-left
-        //     mb: false, //middle-bottom
-        //     br: false, //bottom-right
-        //     mtr: true
-        // });
-        // group.on({
-        //     'rotated': e => {
-        //         group.straighten();
-        //         group.setCoords();
-        //     }
-        // })
-
         return group;
 
     }

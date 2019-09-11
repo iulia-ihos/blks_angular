@@ -8,6 +8,7 @@ import { WebSocketService } from '../websocket/WebSocketService';
 import { UserService } from '../services/user.service';
 
 
+
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -52,8 +53,12 @@ export class LoginComponent implements OnInit {
         this.isLoggedIn = true;
         this.roles = this.tokenStorage.getAuthorities();
        
-       this.webSocket.initializeWebSocketConnection();
-        //window.location.assign("");  
+      this.webSocket.initializeWebSocketConnection(this.tokenStorage.getToken());
+     
+       setTimeout(() => {
+        window.location.assign("");
+       }, 1000);
+     
       
       },
       error => {
@@ -63,6 +68,8 @@ export class LoginComponent implements OnInit {
       }
     );
   }
+
+ 
 
   reloadPage() {
     window.location.reload();

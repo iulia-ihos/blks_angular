@@ -75,7 +75,7 @@ export class RegisterComponent implements OnInit {
     );
   }
 
-  gotToLoginPage() {
+  goToLoginPage() {
     window.location.assign("login");
   }
 }

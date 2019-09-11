@@ -16,6 +16,10 @@ export class UserService {
     return this.http.get<User>(this.usersURL + '/getByEmail/' + email);
   }
 
+  checkUsernameExists(username: string) {
+    return this.http.get<boolean>(this.usersURL + '/checkUsername/' + username);
+  }
+
   getPerformance() {
     return this.http.get<UserPerformance>(this.usersURL+"/score");
   }

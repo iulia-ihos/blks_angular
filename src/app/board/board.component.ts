@@ -1,10 +1,20 @@
-import { Component, OnInit, ElementRef } from '@angular/core';
-import {fabric} from 'fabric';
+import { Component, OnInit, ElementRef, Input, SimpleChanges, SimpleChange } from '@angular/core';
+import { fabric } from 'fabric';
 import { TileService } from '../service/tile.service';
-import {scale, rotate, translate, applyToPoint, toString} from 'transformation-matrix';
 import { rotateMatrix } from '../service/matrix';
-import { groupBy } from 'rxjs/internal/operators/groupBy';
+import { Tile } from '../model/tile';
+import { TilesService } from '../services/tiles.service';
+import { TileNameEnum } from '../model/TileNameEnum';
+import { TileColorEnum } from '../model/TileColorEnum';
+import { WebSocketService } from '../websocket/WebSocketService';
+import { TokenStorageService } from '../auth/token-storage.service';
+import { Move } from '../model/moves';
+import { BoardPosition } from '../model/boardPosition';
+import { MoveMessage } from '../messages/moveMessage';
+import { Game } from '../model/game';
+import { PlayerDetails } from '../model/playerDetails';
 
+type pos = {left: number, top: number}
 
 
 @Component({
@@ -23,12 +33,15 @@ export class BoardComponent implements OnInit {
   private redBoundBox;
   private box;
 
-  private tileService: TileService;
+  private tiles: Tile[];
+  private fabricTiles: fabric.Group[];
+  
 
 
-  constructor(private element: ElementRef, tileService: TileService) { 
-	  this.tileService = tileService;
-  }
+  constructor(private element: ElementRef, private tileService: TileService,
+	private tilesService: TilesService,  private webSocket: WebSocketService,
+	private tokenService: TokenStorageService
+	) { }
 
   private tileLength = 15;
   private tilesPerLine = 20;
@@ -38,27 +51,37 @@ export class BoardComponent implements OnInit {
   private linesX = [];
   private linesY = [];
   private board = [];
-  private currentTile;
+  private currentTile: Tile;
+  private currentFabricTile: fabric.Group;
   
+  @Input() currentPlayerColor: TileColorEnum;
+  @Input() game: Game;
+  @Input() currentPlayer: PlayerDetails;
 
-  ngOnInit() {
+  ngOnInit() {	
+	this.webSocket.initializeWebSocketConnection(this.tokenService.getToken());
+	setTimeout(() =>{
+		this.startMoveSubscription();
+	  }, 1000);
     this.canvas = new fabric.Canvas('canvas', {
 		//hoverCursor: 'pointer',
 		selection: false,
 		targetFindTolerance: 2, 
 		renderOnAddRemove: false
 	  });
-  console.log(this.element.nativeElement);
 	 this.canvas.setWidth(this.element.nativeElement.parentElement.clientWidth);
      this.canvas.setHeight(this.element.nativeElement.parentElement.clientHeight);
 	
 	var bbPadding = 10;
 
+	var bbHeight = this.canvas.height*0.3;
+	var bbWidth = this.canvas.width*0.32;
+
     this.blueBoundBox = new fabric.Rect({
-		width: 300,
-		height: 150,
+		width: bbWidth,
+		height: bbHeight,
 		left: bbPadding,
-		top: this.canvas.height - 150 - bbPadding,
+		top: this.canvas.height - bbHeight - bbPadding,
 		fill: 'transparent',
 		stroke: 'black',
 		selectable: false,
@@ -67,9 +90,9 @@ export class BoardComponent implements OnInit {
 	  });
 
     this.greenBoundBox = new fabric.Rect({
-		width: 300,
-		height: 150,
-		left: this.canvas.width - 300 - bbPadding,
+		width: bbWidth,
+		height: bbHeight,
+		left: this.canvas.width - bbWidth - bbPadding,
 		top:  bbPadding,
 		fill: 'transparent',
 		stroke: 'black',
@@ -78,10 +101,10 @@ export class BoardComponent implements OnInit {
 	  });
 
     this.yellowBoundBox = new fabric.Rect({
-		width: 300,
-		height: 150,
-		left: this.canvas.width - 300 - bbPadding,
-		top:  this.canvas.height - 150 - bbPadding,
+		width: bbWidth,
+		height: bbHeight,
+		left: this.canvas.width - bbWidth - bbPadding,
+		top:  this.canvas.height - bbHeight - bbPadding,
 		fill: 'transparent',
 		stroke: 'black',
 		selectable: false,
@@ -89,8 +112,8 @@ export class BoardComponent implements OnInit {
 	  });
 
     this.redBoundBox = new fabric.Rect({
-		width: 300,
-		height: 150,
+		width: bbWidth,
+		height: bbHeight,
 		left: bbPadding ,
 		top: bbPadding,
 		fill: 'transparent',
@@ -100,10 +123,10 @@ export class BoardComponent implements OnInit {
 	  });
 
 	this.box = new fabric.Rect({
-		width: 150,
-		height: 150,
+		width: this.canvas.height * 0.25,
+		height: this.canvas.height * 0.25,
 		left: 70,
-		top: this.redBoundBox.top + this.redBoundBox.height + 15,
+		top: this.redBoundBox.top + this.redBoundBox.height + this.canvas.height * 0.05,
 		fill: 'transparent',
 		stroke: 'black',
 		selectable: false,
@@ -122,14 +145,24 @@ export class BoardComponent implements OnInit {
     this.canvas.add(this.boardBoundBox);
 	this.canvas.centerObject(this.boardBoundBox);
 	this.canvas.add(this.greenBoundBox);
-	this.addTiles("green", this.greenBoundBox.top, this.greenBoundBox.left, 7, 10);
+	//this.addTiles("green", this.greenBoundBox.top, this.greenBoundBox.left, 7, 10);
 	this.canvas.add(this.redBoundBox);
-	this.addTiles("red", this.redBoundBox.top, this.redBoundBox.left, 7, 10);
+	//.addTiles("red", this.redBoundBox.top, this.redBoundBox.left, 7, 10);
 	this.canvas.add(this.blueBoundBox);
-	this.addTiles("blue", this.blueBoundBox.top, this.blueBoundBox.left, 7, 10);
+	// this.addTiles("blue", this.blueBoundBox.top, this.blueBoundBox.left, 7, 10);
 	this.canvas.add(this.yellowBoundBox);
-	this.addTiles("yellow", this.yellowBoundBox.top, this.yellowBoundBox.left, 7, 10);
+	// this.addTiles("yellow", this.yellowBoundBox.top, this.yellowBoundBox.left, 7, 10);
 	this.canvas.add(this.box);
+	this.tilesService.getAll().subscribe(data => {
+		console.log(data);
+		this.tiles = data;
+		this.addTiles(300, 6, 30, 1);
+		this.canvas.renderAll();
+		this.setTilesSelectable(this.tokenService.getUsername() === this.currentPlayer.username, 
+								this.currentPlayerColor);
+
+	});
+	
 	this.initBox();
 	this.drawBoard();
 
@@ -154,6 +187,7 @@ export class BoardComponent implements OnInit {
 					this.tileService.changeOpacity(e.target, 1);
 					this.tileToRotate = null;
 					this.canvas.remove(this.clonedTile);
+					this.sendMove();
 				} 		
 			} else {
 				
@@ -175,7 +209,7 @@ export class BoardComponent implements OnInit {
 				top: top ,
 				left: left //+ e.target.height
 			});
-		}else console.log("no")
+		}
 	}
 	});
 	
@@ -313,16 +347,157 @@ export class BoardComponent implements OnInit {
 	  [[0,0]]
   ];
 
-  addTiles(color: string, top: number, left: number, nrPerLine: number, spacing: number) {
-	this.tileConfig.forEach((coords, index )=> {
-		var tile = this.tileService.createTile(color, coords, top + (index/nrPerLine)*75 , left + (index%nrPerLine)*75);
+  private red: pos;
+  private blue: pos;
+  private green: pos;
+  private yellow: pos;
+  private redSq: number;
+  private blueSq: number;
+  private greenSq: number;
+  private yellowSq: number;
+
+// ngOnChanges(changes: SimpleChanges) {
+// 	const playerChange: SimpleChange = changes.currentPlayer;
+// 	const colorChange: SimpleChange = changes.currentPlayerColor;
+// 	console.log('prev value: ', colorChange.previousValue);
+// 	console.log('got item: ', colorChange.currentValue);
+ 
+
+// }  
+	
+
+setTilesSelectable(userChecks: boolean, color: string) {
+	if(!userChecks) {
+		this.tiles.forEach(tile => {
+			var fabricTile = this.tileMap.get(tile.idTile);
+			fabricTile.selectable = false;
+		});
+	} else {
+		this.tiles.forEach(tile => {
+			var fabricTile = this.tileMap.get(tile.idTile);
+			if(fabricTile.getObjects()[0].fill == color)
+				fabricTile.selectable = true;
+			else
+				fabricTile.selectable = false;
+		});
+		
+	}
+
+}
+
+	
+
+  init() {
+	this.tilePosition.set(TileNameEnum.i3, {top: 12, left:7});
+	this.tilePosition.set(TileNameEnum.n, {top: 40, left:7});
+	this.tilePosition.set(TileNameEnum.i2, {top:86, left:7});
+	this.tilePosition.set(TileNameEnum.p, {top: 115, left:7});
+
+	this.tilePosition.set(TileNameEnum.u, {top: 13, left:76});
+	this.tilePosition.set(TileNameEnum.l5, {top: 76, left:59});
+	this.tilePosition.set(TileNameEnum.y, {top:128, left:48});
+
+	this.tilePosition.set(TileNameEnum.t5, {top:23, left:125});
+	this.tilePosition.set(TileNameEnum.x, {top: 75, left:137});
+	this.tilePosition.set(TileNameEnum.w, {top: 119, left:123});
+
+	this.tilePosition.set(TileNameEnum.t4, {top: 12, left:173});
+	this.tilePosition.set(TileNameEnum.i, {top: 55, left:190});
+	this.tilePosition.set(TileNameEnum.o, {top:85, left:198});
+	this.tilePosition.set(TileNameEnum.z4, {top:119, left:181});
+
+	this.tilePosition.set(TileNameEnum.i5, {top: 8, left:255});
+	this.tilePosition.set(TileNameEnum.f, {top: 29, left:228});
+	this.tilePosition.set(TileNameEnum.v3, {top: 93, left:244});
+	this.tilePosition.set(TileNameEnum.v5, {top: 120, left:234});
+
+	this.tilePosition.set(TileNameEnum.l4, {top: 32, left:285});
+	this.tilePosition.set(TileNameEnum.i4, {top: 72, left:275});
+	this.tilePosition.set(TileNameEnum.z5, {top: 114, left:286});
+	
+
+   }
+
+  tilePosition: Map<TileNameEnum, pos> = new Map<TileNameEnum, pos>();
+
+  sendMove() {
+	var pos = new BoardPosition(0, this.currentFabricTile.top, this.currentFabricTile.left, this.currentFabricTile.angle,
+		this.currentFabricTile.flipX, this.currentFabricTile.flipY);
+		console.log(this.game);
+	var move: Move = new Move(this.currentTile, this.game , pos);
+	var moveMessage: MoveMessage = new MoveMessage(move, this.currentPlayer, null);
+	this.webSocket.sendMessage("/move", moveMessage);
+	
+  }
+
+  startMoveSubscription() {
+    this.webSocket.addSubscription("/game/move", (data) => {
+      var message: MoveMessage = JSON.parse(data);
+	   this.moveTile(this.tileMap.get(message.move.tile.idTile), message.move.position);
+	   this.setTilesSelectable(this.tokenService.getUsername() === message.nextPlayer.username, 
+								message.nextPlayer.color);
+    });
+  }
+
+  moveTile(tile: fabric.Group, pos: BoardPosition) {
+	tile.left = pos.left;
+	tile.top = pos.top;
+	tile.angle = pos.angle;
+	tile.flipX = pos.isFlippedHorizontally;
+	tile.flipY = pos.isFlippedVertically
+	this.canvas.renderAll();
+  }
+
+  private tileMap: Map<number, fabric.Group> = new Map<number, fabric.Group>();
+
+
+  addTiles( maxLine: number, spacingT: number, spacingL: number, length) {
+	  this.init();
+	this.red = {top: 0, left: 0};
+	this.blue = {top: 0, left: 0};
+	this.green = {top: 0, left: 0};
+	this.yellow = {top: 0, left: 0};
+	this.redSq = 0;
+	this.blueSq = 0;
+	this.greenSq = 0;
+	this.yellowSq = 0;
+	var tile;
+	this.tiles.forEach((element, index )=> {
+		var top = 0;
+		var left = 0;
+		switch(element.color){
+			case 'red': 
+				top = this.redBoundBox.top;
+				left = this.redBoundBox.left;
+				break;
+			case 'green': 
+				top = this.greenBoundBox.top;
+				left = this.greenBoundBox.left;
+				break;
+			case 'blue':
+				top = this.blueBoundBox.top;
+				left = this.blueBoundBox.left;
+				break;
+			case 'yellow': 
+				top = this.yellowBoundBox.top;
+				left = this.yellowBoundBox.left;
+				break;
+		}
+		if(this.tilePosition.get(element.tileDetails.name)) {
+		var offset = this.tilePosition.get(element.tileDetails.name);
+		top += offset.top;
+		left += offset.left;
+		tile = this.tileService.createTile(element.color, element.tileDetails.tileSquares, 
+			top  , left );
 		tile.on({
 			'mousedown': (e) => {
-				//console.log(e);
-				if(this.clonedTile) {
-					this.canvas.remove(this.clonedTile);
-					//console.log(this.clonedTile);
-				}
+				console.log(e.target.getObjects()[0].fill == "red");
+				this.currentTile = element;
+				this.currentFabricTile = e.target;
+				if(e.target.selectable) {
+					if(this.clonedTile) {
+						this.canvas.remove(this.clonedTile);
+					}
 				e.target.clone(obj => {
 					obj.left = this.box.left+90;
 					obj.top = this.box.top+130;
@@ -336,8 +511,11 @@ export class BoardComponent implements OnInit {
 				
 				this.tileToRotate = e.target;
 			}
+		}
 		});
+		this.tileMap.set(element.idTile, tile);
 		this.canvas.add(tile);
+	}
 	})
   }
 
@@ -570,7 +748,6 @@ export class BoardComponent implements OnInit {
 
 
 drawBoard() {
-	console.log(this.board);
   if(this.canvas == null) return;
   let bottom = this.boardBoundBox.top + this.boardBoundBox.height;
   for(var i=0;i<=this.tilesPerLine;i++) {
@@ -647,3 +824,5 @@ private closest(arr, closestTo) {
 
 
 }
+
+ 

@@ -3,8 +3,18 @@
         <div  class = "sidenav"> 
             <span><i class="fa fa-user-circle fa-2x" ></i>
             {{tokenService.getUsername()}}</span>
+            <span  ngbDropdown class="d-inline-block ">
+                <i class="fa fa-gamepad fa-2x ml-3" ngbDropdownToggle id="notifDropDown"></i>
+                <span *ngIf="notifs.length>0" class = "badge-info badge-pill notifBadge">{{notifs.length}}</span>
+                <div ngbDropdownMenu aria-labelledby="notifDropDown" >
+                        <button class = "notif"  ngbDropdownItem *ngFor = "let n of notifs; let i = index"
+                        (click) = "join(i)" ngbTooltip = " You'll play as {{n.color}}">
+                            {{n.message}}</button>
+                      </div>
+            </span>
+
             <a (click) = "logOut()">Log Out</a>
-            <a routerLink="new-game">Start Game</a>
+            <a (click) =  "startGame()">Start Game</a>
         </div>
       </div>
       
@@ -12,11 +22,35 @@
           <div  class = "sidenav">
               <a routerLink="login">Login</a>
               <a routerLink="register">Register</a>
-              <a routerLink="new-game">Start Game</a>
+              <!-- <a routerLink="new-game">Start Game</a> -->
           </div>
       </ng-template>
   
-  <div fxFlexAlign = "center" fxFlex = "100">
-    <app-board></app-board>
+  <div fxFlexLayout="center" fxFlex = "100">
+     
+        <ngb-alert *ngIf = "hasJoined" class="alert-info" >{{joinedAlert}}</ngb-alert>
+        <ngb-alert *ngIf = "showCantJoinAlert" class="alert-danger" (close)="showCantJoinAlert = false">{{joinedAlert}}</ngb-alert>
+
+    <div class = "welcome">
+            <span class="red">W</span>
+            <span class="green">e</span>
+            <span class="yellow">l</span>
+            <span class="blue">c</span>
+            <span class="red">o</span>
+            <span class="green">m</span>
+            <span class="yellow">e </span>
+            <span class="blue">t</span>
+            <span class="red">o </span>
+            <span class="green">B</span>
+            <span class="yellow">l</span>
+            <span class="blue">o</span>
+            <span class="red">k</span>
+            <span class="green">u</span>
+            <span class="yellow">s</span>
+            <span class="red">!</span>
+    </div>
+    <div>
+        <app-leaderboard></app-leaderboard>
+    </div>
   </div>
 </div>

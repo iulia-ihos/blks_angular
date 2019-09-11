@@ -2,72 +2,87 @@ import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
 import { Injectable } from '@angular/core';
 import { TokenStorageService } from '../auth/token-storage.service';
-// import { RxStompService } from '@stomp/ng2-stompjs';
+
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class WebSocketService {
-    private serverUrl = "http://localhost:8080/stomp-endpoint?token=" + this.tokenService.getToken();
+    private serverUrl = "http://localhost:8080/stomp-endpoint?token=";
     private stompClient;
+    private applicationDestPrefix = "/app";
+    private userDestPrefix = "/usr";
 
-    isConnected = false;
+    private isConnected = false;
 
-    constructor(private tokenService: TokenStorageService){
-                //   this.rxStompService.watch('/topic/demo').subscribe((message) => {
-                //    console.log(message);
-                //   });
+    constructor(private tokenService: TokenStorageService){}
+
+    isWSConnected(): boolean {
+      return this.isConnected;
     }
 
-    // send() {
-    //   const message = JSON.stringify({to:"you", from:"me"});
-    //   this.rxStompService.publish({destination: '/topic/demo', body: message});
-    // }
+    successCallback(frame) {
+      this.isConnected = true;
+    }
 
-    
-
-    initializeWebSocketConnection(){
-        let webSocket = new SockJS(this.serverUrl);
-        this.stompClient = Stomp.over(webSocket);
-        this.stompClient.heartbeat.incoming = 1000;
-        this.stompClient.heartbeat.outgoing = 1000;
-       // let that = this;
-        
-        this.stompClient.connect({}, (frame) => {
-          console.log(frame);
-          console.log(this);
-          //this.sendMessage();
-
-          this.stompClient.subscribe("/game/move", (message) => {
-            if(message.body) {
-              console.log(message.body);
-            }
-          });
-
-          this.sendMessage({text:"you", from:"me"});
-
-        });
-      }
-    
-    connectionSuccessCallback(frame) {
-        console.log(frame);
-        console.log(this);
-        //this.sendMessage();
+   initializeWebSocketConnection(token){
+     if(this.isConnected)
+     return;
+      let webSocket = new SockJS(this.serverUrl + token);
+      this.stompClient = Stomp.over(webSocket);
+      this.stompClient.heartbeat.incoming = 1000;
+      this.stompClient.heartbeat.outgoing = 1000;
       
-        this.stompClient.subscribe("/game/move", (message) => {
-          if(message.body) {
-            console.log(message.body);
+      this.stompClient.connect({}, 
+        this.successCallback,
+        () => {
+          this.isConnected = false;
+          console.log("disconected");
+         // this.reconnect(this.successCallback)
+        });
+      setTimeout(()=>{
+
+      }, 1000);
+    }
+
+    addSubscription(relativeUrl, callback) {
+      if(this.stompClient == undefined) {
+        this.initializeWebSocketConnection(this.tokenService.getUsername());
+      }
+      this.stompClient.subscribe(this.userDestPrefix + relativeUrl, (message) => {
+        console.log(message);
+        console.log(message.body);
+        callback(message.body);
+      }
+      )
+    }
+
+    
+    sendMessage(destRaltiveURL: string, message){
+      if(this.stompClient == undefined) {
+        this.initializeWebSocketConnection(this.tokenService.getUsername());
+      }
+        var url = this.applicationDestPrefix+destRaltiveURL;
+        console.log(this.stompClient);
+        this.stompClient.send(url , {}, JSON.stringify(message));
+    }
+
+    reconnect(successCallback) {
+      let connected = false;
+      let reconInv = setInterval(() => {
+        var ws = new WebSocket(this.serverUrl);
+        this.stompClient = Stomp.over(ws);
+        this.stompClient.connect({}, (frame) => {
+          clearInterval(reconInv);
+          connected = true;
+          successCallback();
+        }, () => {
+          if (connected) {
+            this.reconnect(successCallback);
           }
         });
-
-        this.stompClient.send("/app/game" , {}, {to:"you", from:"me"});
-    }
-    
-    sendMessage(message){
-      console.log("send");
-        console.log(this.stompClient);
-        this.stompClient.send("/app/game" , {}, JSON.stringify(message));
+      }, 1000);
     }
 }
 

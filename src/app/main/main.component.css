@@ -1,10 +1,9 @@
 .sidenav {
-    width: 200px; 
+    width: 20vw; 
     height: 100vh;
     top: 0;
     left: 0;
     background-color: #111;
-    overflow-x: hidden;
     padding-top: 20px;
   }
   
@@ -19,3 +18,23 @@
   .sidenav a:hover {
     color: #f1f1f1;
   }
+
+.notifBadge {
+    position:absolute;
+    left: 80%;
+}
+
+.notifContainer {
+  position:relative;
+}
+
+.welcome {
+  text-align: center;
+  font-size: 250%;
+  font-style: oblique;
+  font-family: monospace;
+}
+
+.notif{
+  z-index: 999;
+}
