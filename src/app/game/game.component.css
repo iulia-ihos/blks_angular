@@ -3,7 +3,7 @@
 }
 
 .player{
-    font-size: 120%;
+    font-family: monospace;
 }
 
 .redBg{
@@ -21,7 +21,6 @@
 
 }
 .greenBg{
-    /* background-color: green; */
     border: 1px solid green;
 
 }

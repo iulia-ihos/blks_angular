@@ -31,3 +31,23 @@ export function rotateMatrix(matrix, degrees){
     }   
     return output;
   }
+
+  export function flipX(matrix){
+   var output = Array.apply(null, Array(matrix.length)).map(function(){return []});
+   var row = matrix.length - 1;
+		for(var i = 0; i < matrix.length; i++) 
+			for(var j = 0; j < matrix[0].length; j++) {
+				output[row-i][j] = matrix[i][j];
+			}
+    return output;
+  }
+
+  export function flipY(matrix){
+    var output = Array.apply(null, Array(matrix.length)).map(function(){return []});
+    var col = matrix[0].length - 1;
+		for(var i = 0; i < matrix.length; i++) 
+			for(var j = 0; j < matrix[0].length; j++) {
+				output[i][col-j] = matrix[i][j];
+			}
+    return output;
+  }

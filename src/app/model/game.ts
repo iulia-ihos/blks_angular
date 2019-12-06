@@ -1,5 +1,5 @@
 import { User } from './user';
-import { Move } from './moves';
+import { Move } from './move';
 import { Player } from './player';
 
 export class Game {

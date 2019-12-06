@@ -1,18 +1,20 @@
 import { Component, OnInit, ElementRef, Input, SimpleChanges, SimpleChange } from '@angular/core';
 import { fabric } from 'fabric';
 import { TileService } from '../service/tile.service';
-import { rotateMatrix } from '../service/matrix';
+import { rotateMatrix, flipX, flipY } from '../service/matrix';
 import { Tile } from '../model/tile';
 import { TilesService } from '../services/tiles.service';
 import { TileNameEnum } from '../model/TileNameEnum';
 import { TileColorEnum } from '../model/TileColorEnum';
 import { WebSocketService } from '../websocket/WebSocketService';
 import { TokenStorageService } from '../auth/token-storage.service';
-import { Move } from '../model/moves';
-import { BoardPosition } from '../model/boardPosition';
+import { Move } from '../model/move';
+import { TilePosition } from '../model/tilePosition';
 import { MoveMessage } from '../messages/moveMessage';
 import { Game } from '../model/game';
 import { PlayerDetails } from '../model/playerDetails';
+import { BoardPosition } from '../model/boardPosition';
+import { Position } from '../model/position';
 
 type pos = {left: number, top: number}
 
@@ -145,13 +147,9 @@ export class BoardComponent implements OnInit {
     this.canvas.add(this.boardBoundBox);
 	this.canvas.centerObject(this.boardBoundBox);
 	this.canvas.add(this.greenBoundBox);
-	//this.addTiles("green", this.greenBoundBox.top, this.greenBoundBox.left, 7, 10);
 	this.canvas.add(this.redBoundBox);
-	//.addTiles("red", this.redBoundBox.top, this.redBoundBox.left, 7, 10);
 	this.canvas.add(this.blueBoundBox);
-	// this.addTiles("blue", this.blueBoundBox.top, this.blueBoundBox.left, 7, 10);
 	this.canvas.add(this.yellowBoundBox);
-	// this.addTiles("yellow", this.yellowBoundBox.top, this.yellowBoundBox.left, 7, 10);
 	this.canvas.add(this.box);
 	this.tilesService.getAll().subscribe(data => {
 		console.log(data);
@@ -166,12 +164,6 @@ export class BoardComponent implements OnInit {
 	this.initBox();
 	this.drawBoard();
 
-	
-
-    this.boardBoundBox.on({
-     
-    })
-   
     this.canvas.on({
 		'mouse:down': (e) => {
 		},
@@ -197,17 +189,11 @@ export class BoardComponent implements OnInit {
 			if (this.isOnTheBoard(e.target)) {
 				
 			var pos = this.getGroupPosition(e.target);
-			// console.log(pos);
-			// console.log(this.left);
 			let top = this.closest(this.top, e.target.top);
 			let left = this.closest(this.left, e.target.left);
-
-			// let top = this.closest(this.top, pos.topPos);
-			// let left = this.closest(this.left, pos.leftPos);
-
 			e.target.set({
 				top: top ,
-				left: left //+ e.target.height
+				left: left 
 			});
 		}
 	}
@@ -304,9 +290,6 @@ export class BoardComponent implements OnInit {
 						this.tileToRotate.flipY = !this.tileToRotate.flipY ;
 					else
 					this.tileToRotate.flipX = !this.tileToRotate.flipX ;
-					// console.log(this.tileToRotate.angle);
-					// console.log(this.tileToRotate.flipX);
-					// console.log(this.tileToRotate.flipY);
 
 				   }
                   
@@ -342,29 +325,6 @@ export class BoardComponent implements OnInit {
 
 	}
 
-  private tileConfig = [
-	  [[1,0],[0,1],[1,1],[2,1]],
-	  [[0,0]]
-  ];
-
-  private red: pos;
-  private blue: pos;
-  private green: pos;
-  private yellow: pos;
-  private redSq: number;
-  private blueSq: number;
-  private greenSq: number;
-  private yellowSq: number;
-
-// ngOnChanges(changes: SimpleChanges) {
-// 	const playerChange: SimpleChange = changes.currentPlayer;
-// 	const colorChange: SimpleChange = changes.currentPlayerColor;
-// 	console.log('prev value: ', colorChange.previousValue);
-// 	console.log('got item: ', colorChange.currentValue);
- 
-
-// }  
-	
 
 setTilesSelectable(userChecks: boolean, color: string) {
 	if(!userChecks) {
@@ -421,11 +381,12 @@ setTilesSelectable(userChecks: boolean, color: string) {
   tilePosition: Map<TileNameEnum, pos> = new Map<TileNameEnum, pos>();
 
   sendMove() {
-	var pos = new BoardPosition(0, this.currentFabricTile.top, this.currentFabricTile.left, this.currentFabricTile.angle,
+	var pos = new TilePosition(0, this.currentFabricTile.top, this.currentFabricTile.left, this.currentFabricTile.angle,
 		this.currentFabricTile.flipX, this.currentFabricTile.flipY);
 		console.log(this.game);
 	var move: Move = new Move(this.currentTile, this.game , pos);
-	var moveMessage: MoveMessage = new MoveMessage(move, this.currentPlayer, null);
+	
+	var moveMessage: MoveMessage = new MoveMessage(move, this.currentPlayer, null, this.currentBoardPosition);
 	this.webSocket.sendMessage("/move", moveMessage);
 	
   }
@@ -439,7 +400,7 @@ setTilesSelectable(userChecks: boolean, color: string) {
     });
   }
 
-  moveTile(tile: fabric.Group, pos: BoardPosition) {
+  moveTile(tile: fabric.Group, pos: TilePosition) {
 	tile.left = pos.left;
 	tile.top = pos.top;
 	tile.angle = pos.angle;
@@ -453,14 +414,6 @@ setTilesSelectable(userChecks: boolean, color: string) {
 
   addTiles( maxLine: number, spacingT: number, spacingL: number, length) {
 	  this.init();
-	this.red = {top: 0, left: 0};
-	this.blue = {top: 0, left: 0};
-	this.green = {top: 0, left: 0};
-	this.yellow = {top: 0, left: 0};
-	this.redSq = 0;
-	this.blueSq = 0;
-	this.greenSq = 0;
-	this.yellowSq = 0;
 	var tile;
 	this.tiles.forEach((element, index )=> {
 		var top = 0;
@@ -491,7 +444,6 @@ setTilesSelectable(userChecks: boolean, color: string) {
 			top  , left );
 		tile.on({
 			'mousedown': (e) => {
-				console.log(e.target.getObjects()[0].fill == "red");
 				this.currentTile = element;
 				this.currentFabricTile = e.target;
 				if(e.target.selectable) {
@@ -522,9 +474,9 @@ setTilesSelectable(userChecks: boolean, color: string) {
 
   noSameColorSide(colorCode): boolean {
 	
-	for(var i=0; i<this.currentCoords.length; i++) {
-		var row = this.currentCoords[i][0];
-		var col = this.currentCoords[i][1];
+	for(var i=0; i<this.currentBoardPosition.getCoords().length; i++) {
+		var row = this.currentBoardPosition.getPosition(i).getTop();
+		var col = this.currentBoardPosition.getPosition(i).getLeft();
 			
 		if(row == 0 || row == 19 || col == 0 || col == 19) continue;
 			
@@ -538,30 +490,50 @@ setTilesSelectable(userChecks: boolean, color: string) {
   } 
  
   sameColorCorner(colorCode): boolean {
-
-	for(var i=0; i<this.currentCoords.length; i++){
-		var row = this.currentCoords[i][0];
-		var col = this.currentCoords[i][1];
-
+	for(var i=0; i<this.currentBoardPosition.getCoords().length; i++){
+		var row = this.currentBoardPosition.getPosition(i).getTop();
+		var col = this.currentBoardPosition.getPosition(i).getLeft();
+		console.log(row);
+		console.log(col);
 		if (row == 0 &&  col == 0) return true;
 		if (row == 0 &&  col == 19) return true;
 		if (row == 19 &&  col == 0) return true;
 		if (row == 19 &&  col == 19) return true;
 
-		if(row == 0 || row == 19 || col == 0 || col == 19) continue;
+		if(row == 0) {
+			if(this.board[row + 1][col - 1] == colorCode || this.board[row + 1][col + 1] == colorCode)
+			 return true;
+		}
+
+		if(row == 19) {
+			if(this.board[row - 1][col - 1] == colorCode || this.board[row - 1][col + 1] == colorCode)
+			 return true;
+		}
+
+		if(col == 0) {
+			if(this.board[row + 1][col + 1] == colorCode || this.board[row - 1][col + 1] == colorCode)
+			 return true;
+		}
+
+		if(col == 19) { if(this.board[row + 1][col - 1] == colorCode || this.board[row - 1][col - 1] == colorCode)
+			 return true;
+		}
+
+		if(row == 0 || row == 19 || col == 0 || col == 19)
+			continue;
 
 		if(this.board[row - 1][col - 1] == colorCode ||
 			this.board[row - 1][col + 1] == colorCode ||
 			this.board[row + 1][col - 1] == colorCode||
 			this.board[row + 1][col + 1] == colorCode)
-		 return true
+		 return true;
 	}
 	return false;
   }
 
   private checkEmpty(): boolean {
-	this.currentCoords.forEach((coord) =>{
-		if(this.board[coord[0]][coord[1]] != 0) 
+	this.currentBoardPosition.getCoords().forEach((coord) =>{
+		if(this.board[coord.getTop()][coord.getLeft()] != 0) 
 			return false;
 		
 	});
@@ -569,25 +541,22 @@ setTilesSelectable(userChecks: boolean, color: string) {
   }
 
   private changeBoard(value: number) {
-	this.currentCoords.forEach((coord) =>{
-		this.board[coord[0]][coord[1]] = value; 
+	this.currentBoardPosition.getCoords().forEach((coord) =>{
+		this.board[coord.getTop()][coord.getLeft()] = value; 
 	});
 }
 
   private buildCoords(tileMatrix, top, left) {
-	//   console.log("top " + top);
-	//   console.log("left " + left);
-	this.currentCoords = [];
+	this.currentBoardPosition = new BoardPosition();
 	for(var i = 0; i < tileMatrix.length; i++){
         for(var j = 0; j < tileMatrix[0].length; j++){
 		  if(tileMatrix[i][j] == 1)
-		  	this.currentCoords.push([top+i, left+j]);
+		  	this.currentBoardPosition.add(new Position(top+i, left+j));
         }
 	  }
   }
 
-  private getGroupPosition(group): {leftPos, topPos}{
-
+  private getGroupPosition(group): {leftPos, topPos} {
 	var leftPos = group.left;
 	var topPos = group.top;
 	switch(group.angle){
@@ -609,10 +578,10 @@ setTilesSelectable(userChecks: boolean, color: string) {
 	return pos;
   }
 
-  private currentCoords;
+  private currentBoardPosition: BoardPosition;
 
   addToBoard(group): boolean {
-	 
+	 console.log(this.board);
 	  var tileMatrix = [];
 	  var nLines = Math.floor(group.height/this.tileLength);
 	  var nCols = Math.floor(group.width/this.tileLength);
@@ -643,69 +612,36 @@ setTilesSelectable(userChecks: boolean, color: string) {
 			break;
 	}
 
-	// console.log("left"+leftPos);
-	// console.log("top "+ topPos);
 	leftPos = Math.ceil((this.getGroupPosition(group).leftPos - this.boardBoundBox.left)/this.tileLength);
 	topPos = Math.ceil((this.getGroupPosition(group).topPos - this.boardBoundBox.top)/this.tileLength);
-	// console.log("left"+leftPos);
-	// console.log("top "+ topPos);
-	
-	  var objs = group.getObjects();
-	  
-	 
 
+	var objs = group.getObjects();
 	  
-	
-	  //console.log("w "+group.left);
-
 	for(var i = 0; i<group.size(); i++) {
-		// if(objs[i].type == "image") continue;
-		
-
 		var left = (objs[i].left + group.width/2 )/this.tileLength;
 		var top = (objs[i].top + group.height/2 )/this.tileLength;
+		tileMatrix[top][left] = 1;	
+	}
 
-		tileMatrix[top][left] = 1;
-		
-		// var left =  group.left + objs[i].left + group.width/2 - this.boardBoundBox.left;
-		// var top = group.top +  objs[i].top + group.height/2 - this.boardBoundBox.top;
-
-		// var left =  groupLeft + objs[i].left + group.width/2 - this.boardBoundBox.left;
-		// var top = groupTop +  objs[i].top + group.height/2 - this.boardBoundBox.top;
-		
-		// var row = top/this.tileLength;
-		// var column = left/this.tileLength;
-		//console.log(left+ " "+top);
-		//this.currentCoords.push([top,left]);
+	if(group.flipY) {
+		tileMatrix = flipX(tileMatrix);
+	}
+	if(group.flipX) {
+		tileMatrix = flipY(tileMatrix);
 	}
 	
-	// var transformedMatrix = rotateMatrix(tileMatrix, 360 - group.angle);
-	// console.log(transformedMatrix);
 	if(group.angle != 0) {
 		tileMatrix = rotateMatrix(tileMatrix, 360 - group.angle);
 	}
-	// console.log(group.flipY);
-	// console.log(group.flipX);
-	if(group.flipY) {
-		tileMatrix = rotateMatrix(tileMatrix, 180);
-	}
-	if(group.flipX) {
-		tileMatrix = rotateMatrix(tileMatrix, 180);
-	}
 
-	
-	//console.log(tileMatrix);
+
+	console.log(tileMatrix);
 
 	this.buildCoords(tileMatrix, topPos, leftPos);
 	if(!this.checkEmpty()) {
-		//console.log("not empty");
 		return false;
 	}
-	console.log(this.currentCoords);
 	this.changeBoard(5);  
-	console.log(this.board);
-
-
 	var color = objs[0].fill;
 	var colorCode: number;
 
@@ -721,24 +657,14 @@ setTilesSelectable(userChecks: boolean, color: string) {
 		default: colorCode = 5;
 	}
 
-	//console.log("same side " + this.noSameColorSide(colorCode));
-	//console.log("same corner " + this.sameColorCorner(colorCode) );
-
-	if (this.noSameColorSide( colorCode) 
+	if (this.noSameColorSide(colorCode) 
 			&& this.sameColorCorner(colorCode)) {
-	
 		group.selectable = false;
 		group.evented = false;
-		this.currentCoords.forEach((coord) =>{
-			
-			this.board[coord[0]][coord[1]] = colorCode;
-			//console.log(this.board[coord[0]][coord[1]]);
+		this.currentBoardPosition.getCoords().forEach((coord) =>{
+			this.board[coord.getTop()][coord.getLeft()] = colorCode;
 		});
 
-
-	
-	
-		//console.log(group);
 		return true;
 	}
 	this.changeBoard(0);
@@ -784,14 +710,19 @@ drawBoard() {
 
 }
 
-slack = 20;
+slack = 14;
 
 isOnTheBoard(group): boolean {
    var pos = this.getGroupPosition(group);
+   var width = ((group.angle == 0 ||group.angle == 180)? group.width: group.height);
+   var height = ((group.angle == 0 ||group.angle == 180)? group.height: group.width);;
+   console.log(pos.leftPos + width);
+   console.log(this.boardBoundBox.left + this.boardBoundBox.width + this.slack);
   if (pos.leftPos < this.boardBoundBox.left - this.slack) return false;
   if (pos.topPos < this.boardBoundBox.top - this.slack) return false;
-  if ((pos.leftPos + group.width) > (this.boardBoundBox.left + this.boardBoundBox.width + this.slack)) return false;
-  if ((pos.topPos + group.height) > (this.boardBoundBox.top + this.boardBoundBox.height + this.slack)) return false;
+  if ((pos.leftPos + width) > (this.boardBoundBox.left + this.boardBoundBox.width + this.slack)) return false;
+  if ((pos.topPos + height) > (this.boardBoundBox.top + this.boardBoundBox.height + this.slack)) return false;
+ console.log("board");
   return true;
 }
 

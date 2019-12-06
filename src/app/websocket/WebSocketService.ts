@@ -31,6 +31,8 @@ export class WebSocketService {
      return;
       let webSocket = new SockJS(this.serverUrl + token);
       this.stompClient = Stomp.over(webSocket);
+
+
       this.stompClient.heartbeat.incoming = 1000;
       this.stompClient.heartbeat.outgoing = 1000;
       
@@ -51,8 +53,6 @@ export class WebSocketService {
         this.initializeWebSocketConnection(this.tokenService.getUsername());
       }
       this.stompClient.subscribe(this.userDestPrefix + relativeUrl, (message) => {
-        console.log(message);
-        console.log(message.body);
         callback(message.body);
       }
       )
