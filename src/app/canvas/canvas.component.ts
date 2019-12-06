@@ -9,13 +9,13 @@ import  * as Matter   from 'matter-js'
 })
 export class CanvasComponent implements OnInit {
 
-  @ViewChild('canvas')
+  @ViewChild('canvas', { static: false })
   canvas: ElementRef<HTMLCanvasElement>; 
 
-  @ViewChild('canvasContainer')
+  @ViewChild('canvasContainer', { static: true })
   canvasContainer: ElementRef<HTMLElement>; 
 
-  @ViewChild('greenContainer')
+  @ViewChild('greenContainer', { static: true })
   greenContainer: ElementRef<HTMLElement>; 
 
   private ctx: CanvasRenderingContext2D;
