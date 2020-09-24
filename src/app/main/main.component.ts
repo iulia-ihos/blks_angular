@@ -5,7 +5,7 @@ import { TileColorEnum } from '../model/TileColorEnum';
 import { JoinMessage } from '../messages/joinMessage';
 import { GameService } from '../services/game.service';
 import { Game } from '../model/game';
-import { DataService } from '../service/dataService';
+import { DataService } from '../services/dataService.service';
 import { PlayersMessage } from '../messages/playersMessage';
 
 
@@ -85,7 +85,8 @@ export class MainComponent implements OnInit {
 
   startGame() {
     this.gameService.createGame(new Game(0, "PENDING")).subscribe( data =>{
-      window.location.assign("/new-game/"+data.idGame);
+      //window.location.assign("/new-game/"+data.idGame);
+      window.location.assign("/players");
     });
   }
 

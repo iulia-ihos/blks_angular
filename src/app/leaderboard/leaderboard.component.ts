@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { PerformanceService } from '../services/leaderBoard.service';
+import { UserPerformance } from '../model/performance';
 
 @Component({
   selector: 'app-leaderboard',
@@ -7,13 +9,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class LeaderboardComponent implements OnInit {
 
-  constructor() { }
+  constructor(private leaderBoardService: PerformanceService) { }
 
   colNames = ["Place", "Username", "Win Percentage"];
 
-  rows = [];
+  rows : UserPerformance[] = [];
 
   ngOnInit() {
+    this.leaderBoardService.getLeaderBoard().subscribe(
+      data => {
+        this.rows = data;
+      })
   }
 
 }

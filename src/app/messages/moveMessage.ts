@@ -6,7 +6,8 @@ export class MoveMessage {
     move: Move;
 	nextPlayer: PlayerDetails;
     currentPlayer: PlayerDetails;
-    boardPosition : BoardPosition
+    boardPosition : BoardPosition;
+    board: number[][];
     
     constructor(move: Move, current: PlayerDetails, next: PlayerDetails, boardPosition) {
         this.move = move;

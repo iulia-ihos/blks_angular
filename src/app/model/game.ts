@@ -9,10 +9,12 @@ export class Game {
 	winner?: User;
 	players?: Player[];
 	moves?: Move[];
-	status: string
+	status: string;
+	usingPentobi: boolean;
 	
 	constructor(idGame: number, status: string) {
 		this.status = status;
 		this.idGame = idGame;
+		this.usingPentobi = false;
 	}
 }

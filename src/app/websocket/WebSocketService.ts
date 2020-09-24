@@ -18,72 +18,72 @@ export class WebSocketService {
 
     constructor(private tokenService: TokenStorageService){}
 
-    isWSConnected(): boolean {
-      return this.isConnected;
-    }
 
-    successCallback(frame) {
+    successCallback() {
+      console.log("is connected");
       this.isConnected = true;
     }
 
+    errorCallback(error) {
+      console.log("error callback", "here");
+      console.log('STOMP: ' + error);
+     // this.initializeWebSocketConnection(this.token);
+  }
+
    initializeWebSocketConnection(token){
-     if(this.isConnected)
-     return;
+      if(this.isConnected)
+        return;
       let webSocket = new SockJS(this.serverUrl + token);
       this.stompClient = Stomp.over(webSocket);
-
 
       this.stompClient.heartbeat.incoming = 1000;
       this.stompClient.heartbeat.outgoing = 1000;
       
+      //connect is an asynchronous call
       this.stompClient.connect({}, 
         this.successCallback,
-        () => {
-          this.isConnected = false;
-          console.log("disconected");
-         // this.reconnect(this.successCallback)
-        });
-      setTimeout(()=>{
-
-      }, 1000);
+        this.errorCallback
+       );
     }
 
     addSubscription(relativeUrl, callback) {
-      if(this.stompClient == undefined) {
-        this.initializeWebSocketConnection(this.tokenService.getUsername());
+      console.log("want to subscribe", this.isConnected);
+      if(!this.isConnected) {
+        setTimeout(()=>{
+          
+          this.stompClient.subscribe(this.userDestPrefix + relativeUrl, (message) => {
+            console.log(message);
+            callback(message.body);
+          }
+          )
+        }, 3000);
+      } 
+      else {
+        this.stompClient.subscribe(this.userDestPrefix + relativeUrl, (message) => {
+          console.log(message);
+          callback(message.body);
+        })
       }
-      this.stompClient.subscribe(this.userDestPrefix + relativeUrl, (message) => {
-        callback(message.body);
-      }
-      )
+        
     }
 
     
-    sendMessage(destRaltiveURL: string, message){
-      if(this.stompClient == undefined) {
-        this.initializeWebSocketConnection(this.tokenService.getUsername());
+    sendMessage(destRelativeURL: string, message){
+      console.log("connected?", this.isConnected);
+      var url = this.applicationDestPrefix+destRelativeURL;
+      if(!this.isConnected) {
+        setTimeout(()=>{
+          this.stompClient.send(url , {}, JSON.stringify(message));
+        }, 3000);
       }
-        var url = this.applicationDestPrefix+destRaltiveURL;
-        console.log(this.stompClient);
+      else {
         this.stompClient.send(url , {}, JSON.stringify(message));
+      }
+         
+    
+       
     }
 
-    reconnect(successCallback) {
-      let connected = false;
-      let reconInv = setInterval(() => {
-        var ws = new WebSocket(this.serverUrl);
-        this.stompClient = Stomp.over(ws);
-        this.stompClient.connect({}, (frame) => {
-          clearInterval(reconInv);
-          connected = true;
-          successCallback();
-        }, () => {
-          if (connected) {
-            this.reconnect(successCallback);
-          }
-        });
-      }, 1000);
-    }
 }
 
 

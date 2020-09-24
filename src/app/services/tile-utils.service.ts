@@ -16,13 +16,6 @@ export class TileService {
 
     spacing = 5;
     
-
-    //tileOrder: TileNameEnum[];
-
-
-
-   
-
     createTile(color: string, squares: TileSqaures[], top: number, left: number): fabric.Group {
         
         var options = {

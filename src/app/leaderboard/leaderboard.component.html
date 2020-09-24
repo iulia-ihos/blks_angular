@@ -1,12 +1,13 @@
 <table class = "table table-bordered table-hovered table-responsive-md leaderboard">
   <thead class = thead-light>
     <tr >
-        <th *ngFor ="let col of colNames">col</th>
+        <th *ngFor ="let col of colNames">{{col}}</th>
     </tr>
   </thead>
-  <tr class = "tableBody">
-    <td>Jill</td>
-    <td>Smith</td> 
-    <td>50</td>
+  <tr *ngFor="let row of rows; index as i">
+    <td>{{i + 1}}</td>
+    <td>{{row.user.username}}</td> 
+    <td *ngIf = "row.ranking == 0">-</td>
+    <td *ngIf = "row.ranking > 0">{{row.user.ranking}}</td>
   </tr>
 </table>

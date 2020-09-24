@@ -5,20 +5,32 @@
             <span><i class="fa fa-user-circle fa-2x" ></i>{{tokenService.getUsername()}}</span>
           <ul class = "playersList mt-5 ml-2 p-0">
             <li> 
-              <span class = "red player mr-1">{{redPlayer.username}}  {{redPlayer.points}}</span>
+              <i *ngIf="currentPlayerColor == 'red'" class="fa fa-lightbulb-o"
+              (click) = "requestHint('red')"></i>
+              <span class = "red player mr-1">  {{redPlayer.username}}  {{redPlayer.points}}</span>
               <i *ngIf="currentPlayerColor == 'red'" class="fa fa-play"></i>
+              <i *ngIf="currentPlayer == null && redPlayer?.points == max_score" class="fa fa-flag ml-1"></i>
             </li>
             <li>
-              <span class = "green player mr-1">{{greenPlayer.username}}  {{greenPlayer.points}}</span>
+              <i *ngIf="currentPlayerColor == 'green'" class="fa fa-lightbulb-o"
+              (click) = "requestHint('green')"></i>
+              <span class = "green player mr-1"  >{{greenPlayer.username}}  {{greenPlayer.points}}</span>
               <i *ngIf="currentPlayerColor == 'green'" class="fa fa-play"></i>
+              <i *ngIf="currentPlayer == null && greenPlayer?.points == max_score" class="fa fa-flag ml-1"></i>
             </li>
             <li>
-              <span class = "yellow player mr-1">{{yellowPlayer.username}}  {{yellowPlayer.points}}</span>
+              <i *ngIf="currentPlayerColor == 'yellow'" class="fa fa-lightbulb-o"
+              (click) = "requestHint('yellow')"></i>
+              <span class = "yellow player mr-1">  {{yellowPlayer.username}}  {{yellowPlayer.points}}</span>
               <i *ngIf="currentPlayerColor == 'yellow'" class="fa fa-play"></i>
+              <i *ngIf="currentPlayer == null && yellowPlayer?.points == max_score" class="fa fa-flag ml-1"></i>
             </li>
             <li>
+              <i *ngIf="currentPlayerColor == 'blue'" class="fa fa-lightbulb-o"
+              (click) = "requestHint('blue')"></i>
               <span class = "blue player mr-1">{{bluePlayer.username}}  {{bluePlayer.points}}</span>
               <i *ngIf="currentPlayerColor == 'blue'" class="fa fa-play"></i>
+              <i *ngIf="currentPlayer == null && bluePlayer?.points == max_score" class="fa fa-flag ml-1"></i>
             </li>
           </ul>
     </div>
@@ -26,167 +38,12 @@
   
     <div  fxFlex = "85%" >
       <app-board [game] = "game" [currentPlayerColor] = "currentPlayerColor" 
-       [currentPlayer] = "currentPlayer"></app-board>
+       [currentPlayer] = "currentPlayer" [nextMove] = "nextMove"></app-board>
     </div>
 
 </div>
 
-  <ng-template #notReady>
-  <div  class = "playersContainer">
-          <div fxLayoutGap = "1%"   fxLayout = "row" fxFlex = "100%">
-            <div fxLayout = "column" fxFlex = "50%" fxLayoutGap = "2%" >
-
-                <div class = "redBg" fxFlex = "50%" fxLayout = "column">
-                    <span *ngIf = "players.red.invited && !players.red.joined; else inviteButtonR">
-                        <input [(ngModel)] = "players.red.username" placeholder="username..."/>
-                        <button (click) = "sendInvite(players.red.username, 'red')" 
-                        class = "btn btn-dark btn-sm mt-0 ml-2"  *ngIf = "!players.red.pending">
-                          Choose this player</button>
-                        <div *ngIf="players.red.notFound" class="alert alert-danger label">
-                          Username not found!
-                        </div>
-                        <div *ngIf="players.red.pending" class="alert alert-info label">
-                          PENDING...
-                        </div>
-                    </span>
-                    <ng-template #inviteButtonR>
-                        <button *ngIf = "!players.red.claimed  && !players.red.joined" (click) = "players.red.invited = true" 
-                        class = "btn btn-dark mt-2">Invite player</button>
-                    </ng-template>
-                    <div *ngIf = "players.red.claimed">
-                      {{tokenService.getUsername()}}
-                      <div  class="alert alert-info label">
-                         CLAIMED!
-                         </div>
-                    </div>
-                    <div *ngIf="players.red.joined">
-                      {{players.red.username}}
-                        <div  class="alert alert-info label">
-                            READY...
-                        </div>
-                    </div>   
-                    <button *ngIf = "!players.red.claimed && !players.red.invited  && !players.red.joined" (click) = "players.red.claimed = true" 
-                    class = "btn btn-dark mt-4">Claim!</button>
-
-                </div>
-                <div class = "blueBg" fxFlex = "50%"  fxLayout = "column" > 
-                    <span *ngIf = "players.blue.invited  && !players.blue.joined; else inviteButtonB">
-                        <input [(ngModel)] = "players.blue.username" placeholder="username..." >
-                        <button (click) = "sendInvite(players.blue.username, 'blue')" 
-                        *ngIf = "!players.blue.pending"
-                        class = "btn btn-dark btn-sm mt-0 ml-2">
-                          Choose this player</button>
-                        <div *ngIf="players.blue.notFound" class="alert alert-danger label">
-                          Username not found!
-                        </div>
-                        <div *ngIf="players.blue.pending" class="alert alert-info label">
-                          PENDING...
-                        </div>
-                      </span>
-                    <ng-template #inviteButtonB>
-                        <button *ngIf = "!players.blue.claimed && !players.blue.joined" (click) = "players.blue.invited = true" 
-                        class = "btn btn-dark mt-2">Invite player</button>
-                    </ng-template>
-                    <div *ngIf = "players.blue.claimed">
-                        {{tokenService.getUsername()}}
-                        <div class="alert alert-info label">
-                            CLAIMED
-                          </div>
-                    </div>
-                    <div *ngIf = "players.blue.joined">
-                      {{players.blue.username}}
-                        <div class="alert alert-info label">
-                            READY
-                        </div>
-                    </div>
-                    <button  *ngIf = "!players.blue.claimed && !players.blue.invited && !players.blue.joined" 
-                    class = "btn btn-dark mt-5" 
-                    (click) = "players.blue.claimed = true" >
-                      Claim!</button>
-                </div>
-            </div>
-
-            <div fxLayout = "column"  fxFlex = "50%" fxLayoutGap = "2%">
-                <div class = "greenBg" fxFlex = "50%"  fxLayout = "column" >
-                  <span *ngIf = "players.green.invited && !players.green.joined; else inviteButtonG">
-                      <input [(ngModel)] = "players.green.username" placeholder="username..." >
-                      <button (click) = "sendInvite(players.green.username , 'green')" 
-                      class = "btn btn-dark btn-sm mt-0 ml-2"  *ngIf = "!players.green.pending"
-                      >Choose this player</button>
-                      <div *ngIf="players.green.notFound" class="alert alert-danger label">
-                        Username not found!
-                      </div>
-                      <div *ngIf="players.green.pending" class="alert alert-info label">
-                        PENDING...
-                      </div>
-                    </span>
-                    <ng-template #inviteButtonG>
-                        <button  *ngIf = "!players.green.claimed && !players.green.joined" (click) = "players.green.invited=true"
-                         class = "btn btn-dark mt-2">Invite player</button>
-                    </ng-template>
-                  <div *ngIf = "players.green.claimed">
-                    {{tokenService.getUsername()}}
-                    <div class="alert alert-info label">
-                        CLAIMED
-                    </div>
-                  </div>
-                  <div *ngIf = "players.green.joined">
-                    {{players.green.username}}
-                    <div  class="alert alert-info label">
-                        READY
-                      </div>
-                  </div>
-                    <button *ngIf = "!players.green.claimed && !players.green.invited && !players.green.joined" 
-                    class = "btn btn-dark mt-5" (click) = "players.green.claimed = true" >
-                      Claim!</button>
-                </div>
-
-                <div class = "yellowBg" fxFlex = "50%"   fxLayout = "column" >
-                    <span *ngIf = "players.yellow.invited && !players.yellow.joined; else inviteButtonY">
-                        <input [(ngModel)] = "players.yellow.username" placeholder="username..." >
-                        <button (click) = "sendInvite(players.yellow.username, 'yellow')" 
-                        class = "btn btn-dark btn-sm mt-0 ml-2"  *ngIf = "!players.yellow.pending">
-                          Choose this player</button>
-                        <div *ngIf="players.yellow.notFound" class="alert alert-danger label">
-                          Username not found!
-                        </div>
-                        <div *ngIf="players.yellow.pending" class="alert alert-info label">
-                          PENDING...
-                        </div>
-                      </span>
-                    <ng-template #inviteButtonY>
-                        <button *ngIf = "!players.yellow.claimed && !players.yellow.joined" (click) = "players.yellow.invited = true" 
-                        class = "btn btn-dark mt-2">Invite player</button>
-                    </ng-template>
-                 
-                  <div *ngIf = "players.yellow.claimed">
-                    {{tokenService.getUsername()}}
-                    <div  class="alert alert-info label">
-                       CLAIMED
-                      </div>
-                  </div>
-                  <div *ngIf = "players.yellow.joined">
-                      {{players.yellow.username}}
-                      <div  class="alert alert-info label">
-                         READY
-                        </div>
-                    </div>
-                    <button *ngIf = "!players.yellow.claimed && !players.yellow.invited && !players.yellow.joined" 
-                    class = "btn btn-dark mt-5" (click) = "players.yellow.claimed = true" >
-                      Claim!</button>
-                </div>
-            </div>
-             
-          </div>
-  </div>
-  <button *ngIf="(players.yellow.joined || players.yellow.claimed)&&
-                (players.red.joined || players.red.claimed)&&
-                (players.green.joined || players.green.claimed)&&
-                (players.blue.joined || players.blue.claimed)"
-  class = "btn btn-primary start-btn" (click) = "readyToStart()">Start Game</button>
-
- 
-  </ng-template>
+  <app-players-selector *ngIf = "!gameSetUp"></app-players-selector>
 
 </div>
 

@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 
-import { AuthService } from '../auth/auth.service';
 import { TokenStorageService } from '../auth/token-storage.service';
 import { AuthLoginInfo } from '../auth/login-info';
-import { PreviousRouteService } from "../service/previous-route.service";
+import { PreviousRouteService } from "../services/previous-route.service";
 import { WebSocketService } from '../websocket/WebSocketService';
 import { UserService } from '../services/user.service';
+import { AuthService } from '../auth/auth.service';
 
 
 

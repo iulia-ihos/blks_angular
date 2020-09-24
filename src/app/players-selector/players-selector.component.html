@@ -1,0 +1,248 @@
+<body>
+<div *ngIf="opponentTypeChosen ; else chooseOpponentType">
+    <div *ngIf="computerChosen ; else humanChosen">
+      <div class fxLayoutGap = "1%"   fxLayout = "row" >
+        <div    class = "titleText green " fxFlex = "30%">
+          Choose your 2 colors and your computer component
+       </div>
+      </div>
+        <div  class = "mt-5 ml-5">
+        
+            <div class fxLayoutGap = "1%"   fxLayout = "row" >
+              <div fxLayout = "column" fxFlex = "15%" fxLayoutGap = "5%"  >
+                    
+                  <div  class = "redBg"  fxLayout = "column">
+                    <!-- <mat-checkbox class="" checked = "true" [(ngModel)]="redChecked"> Red</mat-checkbox> -->
+                    <label class="">Red
+                        <input [(ngModel)]="redChecked" type="checkbox" checked="checked">
+                      </label>
+             
+                  </div>
+                  <div class = "blueBg"   fxLayout = "column" > 
+                    <!-- <mat-checkbox class="" checked = "true" [(ngModel)]="blueChecked"> Blue</mat-checkbox> -->
+                    <label class="">Blue
+                        <input [(ngModel)]="blueChecked" type="checkbox" checked="checked">
+                      </label>
+                  </div>
+              </div>
+  
+              <div fxLayout = "column"  fxFlex = "15%" fxLayoutGap = "2%">
+                  <div class = "greenBg"  fxLayout = "column" >
+                    <!-- <mat-checkbox class="box" [(ngModel)]="greenChecked"> Green</mat-checkbox> -->
+                    <label class="">Green
+                        <input [(ngModel)]="greenChecked" type="checkbox" checked="checked">
+                      </label>
+                  </div>
+  
+                  <div class = "yellowBg"  fxLayout = "column" >
+                    <!-- <mat-checkbox class="box" [(ngModel)]="yellowChecked"> Yellow</mat-checkbox> -->
+                    <label class="">Yellow
+                        <input [(ngModel)]="yellowChecked" type="checkbox" checked="checked">
+                      </label>
+                  </div>
+              </div>
+               
+            </div >
+          <div class = "mt-3 ml-5">
+            <div class   fxLayout = "row" >
+              <div fxLayout = "column" fxFlex = "10%"  >
+                <div  fxLayout = "row"  >
+                <input type="radio" 
+                name="mode"
+                value="pentobi"
+                [(ngModel)]="value" />
+                <label>Pentobi</label>
+                  </div>
+                <div class   fxLayout = "row"  >
+                <input type="radio"  
+                id="ibotnep"
+                name="mode"
+                value="ibotnep"
+                [(ngModel)]="value"/>
+                <label>Ibotnep</label>
+                </div>
+              </div>
+              <div fxLayout = "column" fxFlex = "15%" >
+                <button class = "btn btn-primary start-btn mt-3" (click) = "startGame()">Start Game</button>
+              </div>
+           </div>
+           
+            
+          </div>
+         </div>
+         
+    </div>
+    <ng-template #humanChosen>
+            <div  class = "playersContainer">
+                    <div fxLayoutGap = "1%"   fxLayout = "row" fxFlex = "100%">
+                      <div fxLayout = "column" fxFlex = "50%" fxLayoutGap = "2%" >
+          
+                          <div class = "redBg" fxFlex = "50%" fxLayout = "column">
+                              <span *ngIf = "players.red.invited && !players.red.joined; else inviteButtonR">
+                                  <input  [(ngModel)] = "players.red.username" placeholder="username..."/>
+                                  <button (click) = "sendInvite(players.red.username, 'red')" 
+                                  class = "btn btn-dark btn-sm mt-0 ml-2"  *ngIf = "!players.red.pending">
+                                    Choose this player</button>
+                                  <div *ngIf="players.red.notFound" class="alert alert-danger label">
+                                    Username not found!
+                                  </div>
+                                  <div *ngIf="players.red.pending" class="alert alert-info label">
+                                    PENDING...
+                                  </div>
+                              </span>
+                              <ng-template #inviteButtonR>
+                                  <button *ngIf = "!players.red.claimed  && !players.red.joined" (click) = "players.red.invited = true" 
+                                  class = "btn btn-dark mt-2">Invite player</button>
+                              </ng-template>
+                              <div *ngIf = "players.red.claimed">
+                                {{tokenService.getUsername()}}
+                                <div  class="alert alert-info label">
+                                   CLAIMED!
+                                   </div>
+                              </div>
+                              <div *ngIf="players.red.joined">
+                                {{players.red.username}}
+                                  <div  class="alert alert-info label">
+                                      READY...
+                                  </div>
+                              </div>   
+                              <button *ngIf = "!players.red.claimed && !players.red.invited  && !players.red.joined" (click) = "players.red.claimed = true" 
+                              class = "btn btn-dark mt-4">Claim!</button>
+          
+                          </div>
+                          <div class = "blueBg" fxFlex = "50%"  fxLayout = "column" > 
+                              <span *ngIf = "players.blue.invited  && !players.blue.joined; else inviteButtonB">
+                                  <input [(ngModel)] = "players.blue.username" placeholder="username..." >
+                                  <button (click) = "sendInvite(players.blue.username, 'blue')" 
+                                  *ngIf = "!players.blue.pending"
+                                  class = "btn btn-dark btn-sm mt-0 ml-2">
+                                    Choose this player</button>
+                                  <div *ngIf="players.blue.notFound" class="alert alert-danger label">
+                                    Username not found!
+                                  </div>
+                                  <div *ngIf="players.blue.pending" class="alert alert-info label">
+                                    PENDING...
+                                  </div>
+                                </span>
+                              <ng-template #inviteButtonB>
+                                  <button *ngIf = "!players.blue.claimed && !players.blue.joined" (click) = "players.blue.invited = true" 
+                                  class = "btn btn-dark mt-2">Invite player</button>
+                              </ng-template>
+                              <div *ngIf = "players.blue.claimed">
+                                  {{tokenService.getUsername()}}
+                                  <div class="alert alert-info label">
+                                      CLAIMED
+                                    </div>
+                              </div>
+                              <div *ngIf = "players.blue.joined">
+                                {{players.blue.username}}
+                                  <div class="alert alert-info label">
+                                      READY
+                                  </div>
+                              </div>
+                              <button  *ngIf = "!players.blue.claimed && !players.blue.invited && !players.blue.joined" 
+                              class = "btn btn-dark mt-5" 
+                              (click) = "players.blue.claimed = true" >
+                                Claim!</button>
+                          </div>
+                      </div>
+          
+                      <div fxLayout = "column"  fxFlex = "50%" fxLayoutGap = "2%">
+                          <div class = "greenBg" fxFlex = "50%"  fxLayout = "column" >
+                            <span *ngIf = "players.green.invited && !players.green.joined; else inviteButtonG">
+                                <input [(ngModel)] = "players.green.username" placeholder="username..." >
+                                <button (click) = "sendInvite(players.green.username , 'green')" 
+                                class = "btn btn-dark btn-sm mt-0 ml-2"  *ngIf = "!players.green.pending"
+                                >Choose this player</button>
+                                <div *ngIf="players.green.notFound" class="alert alert-danger label">
+                                  Username not found!
+                                </div>
+                                <div *ngIf="players.green.pending" class="alert alert-info label">
+                                  PENDING...
+                                </div>
+                              </span>
+                              <ng-template #inviteButtonG>
+                                  <button  *ngIf = "!players.green.claimed && !players.green.joined" (click) = "players.green.invited=true"
+                                   class = "btn btn-dark mt-2">Invite player</button>
+                              </ng-template>
+                            <div *ngIf = "players.green.claimed">
+                              {{tokenService.getUsername()}}
+                              <div class="alert alert-info label">
+                                  CLAIMED
+                              </div>
+                            </div>
+                            <div *ngIf = "players.green.joined">
+                              {{players.green.username}}
+                              <div  class="alert alert-info label">
+                                  READY
+                                </div>
+                            </div>
+                              <button *ngIf = "!players.green.claimed && !players.green.invited && !players.green.joined" 
+                              class = "btn btn-dark mt-5" (click) = "players.green.claimed = true" >
+                                Claim!</button>
+                          </div>
+          
+                          <div class = "yellowBg" fxFlex = "50%"   fxLayout = "column" >
+                              <span *ngIf = "players.yellow.invited && !players.yellow.joined; else inviteButtonY">
+                                  <input [(ngModel)] = "players.yellow.username" placeholder="username..." >
+                                  <button (click) = "sendInvite(players.yellow.username, 'yellow')" 
+                                  class = "btn btn-dark btn-sm mt-0 ml-2"  *ngIf = "!players.yellow.pending">
+                                    Choose this player</button>
+                                  <div *ngIf="players.yellow.notFound" class="alert alert-danger label">
+                                    Username not found!
+                                  </div>
+                                  <div *ngIf="players.yellow.pending" class="alert alert-info label">
+                                    PENDING...
+                                  </div>
+                                </span>
+                              <ng-template #inviteButtonY>
+                                  <button *ngIf = "!players.yellow.claimed && !players.yellow.joined" (click) = "players.yellow.invited = true" 
+                                  class = "btn btn-dark mt-2">Invite player</button>
+                              </ng-template>
+                           
+                            <div *ngIf = "players.yellow.claimed">
+                              {{tokenService.getUsername()}}
+                              <div  class="alert alert-info label">
+                                 CLAIMED
+                                </div>
+                            </div>
+                            <div *ngIf = "players.yellow.joined">
+                                {{players.yellow.username}}
+                                <div  class="alert alert-info label">
+                                   READY
+                                  </div>
+                              </div>
+                              <button *ngIf = "!players.yellow.claimed && !players.yellow.invited && !players.yellow.joined" 
+                              class = "btn btn-dark mt-5" (click) = "players.yellow.claimed = true" >
+                                Claim!</button>
+                          </div>
+                      </div>
+                       
+                    </div>
+            </div>
+            <button *ngIf="(players.yellow.joined || players.yellow.claimed)&&
+                          (players.red.joined || players.red.claimed)&&
+                          (players.green.joined || players.green.claimed)&&
+                          (players.blue.joined || players.blue.claimed)"
+            class = "btn btn-primary start-btn" (click) = "readyToStart()">Start Game</button>
+    </ng-template>
+</div>
+
+<ng-template #chooseOpponentType>
+    <div class="mt-4 ml-4">
+        <div fxLayoutGap = "1%"   fxLayout = "row" fxFlex = "100%" class = "titleText green">
+           Choose between the two options
+        </div>
+    </div>
+    <div class="mt-4 ml-4">
+        <div fxLayoutGap = "1%"   fxLayout = "column"  >
+            <div class = "" fxFlex = "100%" >
+                <button (click) = "chooseComputer(true)" class="btn btn-primary mt-5 ml-3">Computer Player</button>
+            </div>
+            <div class = "" fxFlex = "100%" > 
+                <button  (click) = "chooseComputer(false)" class="btn btn-primary mt-5 ml-3">Invite Other Players</button>
+            </div>
+        </div>
+    </div>
+  </ng-template>
+</body>

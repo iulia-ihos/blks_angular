@@ -1,7 +1,7 @@
 import { Component, OnInit, ElementRef, Input, SimpleChanges, SimpleChange } from '@angular/core';
 import { fabric } from 'fabric';
-import { TileService } from '../service/tile.service';
-import { rotateMatrix, flipX, flipY } from '../service/matrix';
+import { TileService } from '../services/tile-utils.service';
+import { rotateMatrix, flipX, flipY } from '../services/matrix.service';
 import { Tile } from '../model/tile';
 import { TilesService } from '../services/tiles.service';
 import { TileNameEnum } from '../model/TileNameEnum';
@@ -15,6 +15,8 @@ import { Game } from '../model/game';
 import { PlayerDetails } from '../model/playerDetails';
 import { BoardPosition } from '../model/boardPosition';
 import { Position } from '../model/position';
+import { HintMessage } from '../messages/hintMessage';
+import { DataService } from '../services/dataService.service';
 
 type pos = {left: number, top: number}
 
@@ -42,7 +44,7 @@ export class BoardComponent implements OnInit {
 
   constructor(private element: ElementRef, private tileService: TileService,
 	private tilesService: TilesService,  private webSocket: WebSocketService,
-	private tokenService: TokenStorageService
+	private tokenService: TokenStorageService, private dataService: DataService
 	) { }
 
   private tileLength = 15;
@@ -59,18 +61,32 @@ export class BoardComponent implements OnInit {
   @Input() currentPlayerColor: TileColorEnum;
   @Input() game: Game;
   @Input() currentPlayer: PlayerDetails;
+  @Input() nextMove: MoveMessage;
 
+  ngOnChanges(changes: SimpleChanges) {
+	if (typeof changes['nextMove'] !== "undefined") {
+
+		var change = changes['nextMove'];
+
+	
+		this.newMoveHandler(change.currentValue);
+		}
+	}
+
+
+  
   ngOnInit() {	
 	this.webSocket.initializeWebSocketConnection(this.tokenService.getToken());
-	setTimeout(() =>{
-		this.startMoveSubscription();
-	  }, 1000);
+	this.startHintSubscription();
+	
     this.canvas = new fabric.Canvas('canvas', {
 		//hoverCursor: 'pointer',
 		selection: false,
 		targetFindTolerance: 2, 
 		renderOnAddRemove: false
 	  });
+
+	  
 	 this.canvas.setWidth(this.element.nativeElement.parentElement.clientWidth);
      this.canvas.setHeight(this.element.nativeElement.parentElement.clientHeight);
 	
@@ -381,31 +397,45 @@ setTilesSelectable(userChecks: boolean, color: string) {
   tilePosition: Map<TileNameEnum, pos> = new Map<TileNameEnum, pos>();
 
   sendMove() {
-	var pos = new TilePosition(0, this.currentFabricTile.top, this.currentFabricTile.left, this.currentFabricTile.angle,
-		this.currentFabricTile.flipX, this.currentFabricTile.flipY);
+	var pos = new TilePosition(0, this.currentFabricTile.top - this.boardBoundBox.top, 
+			this.currentFabricTile.left - this.boardBoundBox.left, this.currentFabricTile.angle,
+			this.currentFabricTile.flipX, this.currentFabricTile.flipY);
 		console.log(this.game);
 	var move: Move = new Move(this.currentTile, this.game , pos);
 	
 	var moveMessage: MoveMessage = new MoveMessage(move, this.currentPlayer, null, this.currentBoardPosition);
 	this.webSocket.sendMessage("/move", moveMessage);
-	
+  }
+  
+
+  newMoveHandler(message: MoveMessage) {
+	console.log(message);
+	if(message == undefined)
+	  return;
+	this.moveTile(this.tileMap.get(message.move.tile.idTile), message.move.position);
+	this.setTilesSelectable(this.tokenService.getUsername() === message.nextPlayer.username, 
+							message.nextPlayer.color);
+	if(this.currentPlayer.username == "pentobi" || this.currentPlayer.username == "ibotnep"){
+		var move: Move = new Move(null, this.game , null);
+		this.webSocket.sendMessage("/move", new MoveMessage(move, this.currentPlayer, null, null));
+	}
   }
 
-  startMoveSubscription() {
-    this.webSocket.addSubscription("/game/move", (data) => {
-      var message: MoveMessage = JSON.parse(data);
-	   this.moveTile(this.tileMap.get(message.move.tile.idTile), message.move.position);
-	   this.setTilesSelectable(this.tokenService.getUsername() === message.nextPlayer.username, 
-								message.nextPlayer.color);
+  startHintSubscription() {
+    this.webSocket.addSubscription("/game/hint", (data) => {
+	  var message: HintMessage = JSON.parse(data);
+	  console.log(data);
+	  this.dataService.addHint(message);
     });
   }
 
   moveTile(tile: fabric.Group, pos: TilePosition) {
-	tile.left = pos.left;
-	tile.top = pos.top;
+	tile.left = pos.left + this.boardBoundBox.left;
+	tile.top = pos.top + this.boardBoundBox.top;
 	tile.angle = pos.angle;
 	tile.flipX = pos.isFlippedHorizontally;
-	tile.flipY = pos.isFlippedVertically
+	tile.flipY = pos.isFlippedVertically;
+	this.addToBoard(tile);
 	this.canvas.renderAll();
   }
 
@@ -473,7 +503,6 @@ setTilesSelectable(userChecks: boolean, color: string) {
 
 
   noSameColorSide(colorCode): boolean {
-	
 	for(var i=0; i<this.currentBoardPosition.getCoords().length; i++) {
 		var row = this.currentBoardPosition.getPosition(i).getTop();
 		var col = this.currentBoardPosition.getPosition(i).getLeft();
@@ -582,6 +611,7 @@ setTilesSelectable(userChecks: boolean, color: string) {
 
   addToBoard(group): boolean {
 	 console.log(this.board);
+	 console.log(group);
 	  var tileMatrix = [];
 	  var nLines = Math.floor(group.height/this.tileLength);
 	  var nCols = Math.floor(group.width/this.tileLength);
@@ -636,7 +666,14 @@ setTilesSelectable(userChecks: boolean, color: string) {
 
 
 	console.log(tileMatrix);
-
+	console.log(topPos);
+	console.log(leftPos);
+	for(var i = 0; i < tileMatrix.length; i++)
+	for(var j  = 0; j < tileMatrix[0].length; j++)
+	if(tileMatrix[i][j] == 1)
+	  if(this.board[ i + topPos][j + leftPos] != 0 )
+	    return false;
+	console.log(" here");
 	this.buildCoords(tileMatrix, topPos, leftPos);
 	if(!this.checkEmpty()) {
 		return false;
@@ -650,9 +687,9 @@ setTilesSelectable(userChecks: boolean, color: string) {
 		break;
 		case 'green': colorCode = 2;
 		break;
-		case 'blue': colorCode = 3;
+		case 'blue': colorCode = 4;
 		break;
-		case 'yellow': colorCode = 4;
+		case 'yellow': colorCode = 3;
 		break;
 		default: colorCode = 5;
 	}
